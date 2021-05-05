@@ -1,0 +1,2 @@
+In folderul BinomialHeapInfoarena este implementat un binomial heap de maxim pentru input-ul de pe infoarena, 
+iar in celalalt folder este implementat un binomial heap de minim care contine si celelalte cerinte (build in O(n) amortizat + lazy deletion)
