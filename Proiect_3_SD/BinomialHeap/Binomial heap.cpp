@@ -1,11 +1,18 @@
+//Vasile George-Cristian
+//Grupa 131
+//In acest .cpp este implementat un binomial heap de maxim care are inclus si un build in O(n) (amortizat) + cateva lazy deletion-uri
+
+
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <unordered_set>
+#include <vector>
 
 using namespace std;
 
-ifstream f("mergeheap.in");
-ofstream g("mergeheap.out");
+ifstream f("mergeheapmin.in");
+ofstream g("mergeheapmin.out");
 
 struct Nod {
     int val, grad;
@@ -24,6 +31,7 @@ Nod* newNod(int x) {    //se creeaza un nod nou
 
 class BinomialHeap {
     list <Nod*> heap;
+    unordered_set <int> toDelete;
 public:
 
     void deleteRadacina(Nod* min) {     //se elimina radacina unui tree primit ca parametru si se "distribuie" copii in heap
@@ -45,9 +53,9 @@ public:
         delete del;
     }
 
-    Nod* mergeTrees(Nod* t1, Nod* t2) {     //se merge-uiesc 2 arbori binomiali
+    Nod* mergeTrees(Nod* t1, Nod* t2) {     //se merge-uiesc 2 binary trees
 
-        if (t1->val < t2->val) {            //daca val radacinii lui tree-ului t1 este mai mare ca val radacinii lui t2 se interschimba
+        if (t1->val > t2->val) {            //daca val radacinii lui tree-ului t1 este mai mare ca val radacinii lui t2 se interschimba
             Nod* aux;
             aux = t1;
             t1 = t2;
@@ -180,10 +188,10 @@ public:
 
 
     Nod* getRadacina() {        //se returneaza nodul care contine minimul
-        Nod* min = newNod(-999999999);
+        Nod* min = newNod(999999999);
 
         for (auto it = heap.begin(); it != heap.end(); it++) {
-            if ((*it)->val > min->val) {
+            if ((*it)->val < min->val) {
                 min = *it;
             }
         }
@@ -192,7 +200,13 @@ public:
     }
 
     int top() {
-        return getRadacina()->val;
+        int x = getRadacina()->val;
+        while (isRemoved(x)) {       //lazy deletion
+            pop();
+            toDelete.erase(x);       //se sterge elementul din hash-ul pt lazy deletion
+            x = getRadacina()->val;
+        }
+        return x;
     }
 
     void push(int x) {
@@ -211,6 +225,37 @@ public:
         heap.remove(radacina);   //se sterge tree-ul care contine minimul din heap
 
         meld(newHeap);  //se insereaza copii tree-ului in heap
+    }
+
+    void remove(int x) {
+        toDelete.insert(x);
+    }
+
+    bool isRemoved(int x) {
+        if (toDelete.find(x) == toDelete.end())
+            return 0;
+        else return 1;
+    }
+
+    void build(vector<int> v) {
+        for (int i = 0; i < v.size(); i++) {
+            push(v[i]);
+        }
+    }
+
+    void printTree(Nod* tree) {
+        if (tree != NULL) {
+            cout << tree->val << " ";
+            printTree(tree->copil);
+            printTree(tree->frate);
+        }
+    }
+
+    void printHeap() {
+        for (auto it = heap.begin(); it != heap.end(); it++) {
+            printTree(*it);
+            cout << "\n";
+        }
     }
 };
 
@@ -233,7 +278,7 @@ int main()
         if (opt == 2) {                        //delete min + afis
 
             f >> heap;
-            g << Heap[heap].top() << '\n'; 
+            g << "Extras din heap-ul #"<<heap<<": "<< Heap[heap].top() << '\n'; 
             Heap[heap].pop();                     
         }
         if (opt == 3) {                       //merge 
@@ -241,6 +286,26 @@ int main()
             f >> heap1 >> heap2;
             Heap[heap1].meld(Heap[heap2]);
         }
+        if (opt == 4) {                       //marcare de valori pentru lazy deletion
+            f >> heap >> x;
+            Heap[heap].remove(x);
+        }
+    }
+
+    f >> N;
+    vector <int> numbers;
+    for (int i = 0; i < N; i++) {
+        f >> x;
+        numbers.push_back(x);
+    }
+    BinomialHeap builtHeap;
+    builtHeap.build(numbers);
+    cout << "Structura heap-ului: \n";
+    builtHeap.printHeap();
+    cout << "\nElementele sortate: ";
+    for (int i = 0; i < N; i++) {
+        cout << builtHeap.top()<<" ";
+        builtHeap.pop();
     }
     return 0;
 }
